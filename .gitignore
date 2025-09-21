@@ -1,1 +1,4 @@
 TimeSyncedKeyPresser.exe.manifest
+/dist
+/build
+*.spec
