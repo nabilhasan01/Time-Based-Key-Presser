@@ -1,12 +1,13 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QTimeEdit, QSpinBox, QCheckBox, QLineEdit, QPushButton, QVBoxLayout, QTextEdit, QMessageBox
-from PyQt5.QtCore import QTime, QThread, pyqtSignal
+from PyQt5.QtCore import QTime, QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QIcon
 import pydirectinput
 import time
 from datetime import datetime, timedelta
 import ntplib
 import os
+import sys
 
 class KeyPressWorker(QThread):
     log_signal = pyqtSignal(str)
@@ -33,7 +34,12 @@ class KeyPressWorker(QThread):
 
     def run(self):
         now = datetime.now()
-        target_time = now.replace(hour=self.initial_time.hour(), minute=self.initial_time.minute(), second=self.initial_time.second(), microsecond=0)
+        target_time = now.replace(
+            hour=self.initial_time.hour(),
+            minute=self.initial_time.minute(),
+            second=self.initial_time.second(),
+            microsecond=self.initial_time.msec() * 1000  # Convert milliseconds to microseconds
+        )
 
         if target_time < now:
             target_time += timedelta(days=1)
@@ -54,12 +60,12 @@ class KeyPressWorker(QThread):
         self.finished_signal.emit()
 
     def wait_and_press(self, target_time, iteration):
-        self.log_signal.emit(f"Iteration {iteration + 1}: Waiting until {target_time.strftime('%H:%M:%S')} to press '{self.key_to_press}'...")
+        self.log_signal.emit(f"Iteration {iteration + 1}: Waiting until {target_time.strftime('%H:%M:%S.%f')[:-3]} to press '{self.key_to_press}'...")
         
         current_time = datetime.now()
         sleep_seconds = (target_time - current_time).total_seconds()
         while sleep_seconds > 0 and not self._stop:
-            sleep_interval = min(0.1, sleep_seconds)
+            sleep_interval = min(0.01, sleep_seconds)  # Smaller interval for ms precision
             time.sleep(sleep_interval)
             current_time = datetime.now()
             sleep_seconds = (target_time - current_time).total_seconds()
@@ -77,7 +83,7 @@ class KeyPressWorker(QThread):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        
+
         def resource_path(relative_path):
             """Get absolute path to resource, works for dev and for PyInstaller"""
             if hasattr(sys, '_MEIPASS'):
@@ -90,18 +96,17 @@ class MainWindow(QWidget):
         icon_path = resource_path(os.path.join("resource", "icon.ico"))
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
-        
+
         self.setWindowTitle("Time Based Key Clicker")
         self.setFixedSize(300, 550)
         self.layout = QVBoxLayout()
-        
 
         # Initial Time
-        self.time_label = QLabel("Initial Time (HH:MM:SS):")
+        self.time_label = QLabel("Initial Time (HH:MM:SS.mmm):")
         self.time_edit = QTimeEdit()
-        self.time_edit.setDisplayFormat("HH:mm:ss")  # Explicitly include seconds
+        self.time_edit.setDisplayFormat("HH:mm:ss.zzz")  # Include milliseconds
         current_time = QTime.currentTime().addSecs(60)  # Set default to current time + 1 minute
-        self.time_edit.setTime(QTime(current_time.hour(), current_time.minute(), 0))  # Set seconds to 00
+        self.time_edit.setTime(QTime(current_time.hour(), current_time.minute(), 0, 0))  # Set seconds and milliseconds to 00
         self.layout.addWidget(self.time_label)
         self.layout.addWidget(self.time_edit)
 
@@ -150,6 +155,12 @@ class MainWindow(QWidget):
         self.stop_button.setEnabled(False)
         self.layout.addWidget(self.stop_button)
 
+        # Footer
+        self.footer_label = QLabel("by Ghos1y")
+        self.footer_label.setAlignment(Qt.AlignCenter)  # Center the text
+        self.footer_label.setStyleSheet("font-size: 12px; color: #888888;")  # Smaller, lighter text for footer
+        self.layout.addWidget(self.footer_label)
+
         self.setLayout(self.layout)
         self.worker = None
 
@@ -167,7 +178,12 @@ class MainWindow(QWidget):
 
         initial_time = self.time_edit.time()
         now = datetime.now()
-        target_time = now.replace(hour=initial_time.hour(), minute=initial_time.minute(), second=initial_time.second(), microsecond=0)
+        target_time = now.replace(
+            hour=initial_time.hour(),
+            minute=initial_time.minute(),
+            second=initial_time.second(),
+            microsecond=initial_time.msec() * 1000  # Convert milliseconds to microseconds
+        )
 
         # Check if initial time has already passed
         if target_time <= now:
