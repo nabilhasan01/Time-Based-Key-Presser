@@ -1,10 +1,12 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QTimeEdit, QSpinBox, QCheckBox, QLineEdit, QPushButton, QVBoxLayout, QTextEdit, QMessageBox
 from PyQt5.QtCore import QTime, QThread, pyqtSignal
+from PyQt5.QtGui import QIcon
 import pydirectinput
 import time
 from datetime import datetime, timedelta
 import ntplib
+import os
 
 class KeyPressWorker(QThread):
     log_signal = pyqtSignal(str)
@@ -75,9 +77,24 @@ class KeyPressWorker(QThread):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        
+        def resource_path(relative_path):
+            """Get absolute path to resource, works for dev and for PyInstaller"""
+            if hasattr(sys, '_MEIPASS'):
+                # PyInstaller stores bundled files in sys._MEIPASS
+                base_path = sys._MEIPASS
+            else:
+                base_path = os.path.abspath(".")
+            return os.path.join(base_path, relative_path)
+
+        icon_path = resource_path(os.path.join("resource", "icon.ico"))
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        
         self.setWindowTitle("Time Based Key Clicker")
         self.setFixedSize(300, 550)
         self.layout = QVBoxLayout()
+        
 
         # Initial Time
         self.time_label = QLabel("Initial Time (HH:MM:SS):")
