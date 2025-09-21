@@ -56,7 +56,6 @@ class KeyPressWorker(QThread):
         
         current_time = datetime.now()
         sleep_seconds = (target_time - current_time).total_seconds()
-        start_time = time.perf_counter()
         while sleep_seconds > 0 and not self._stop:
             sleep_interval = min(0.1, sleep_seconds)  # Sleep for 100ms or remaining time
             time.sleep(sleep_interval)
@@ -77,6 +76,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Time Based Key Clicker")
+        self.setFixedSize(300, 550)  # Fixed window size
         self.layout = QVBoxLayout()
 
         # Initial Time
