@@ -186,6 +186,46 @@ class MainWindow(QWidget):
 if __name__ == "__main__":
     pydirectinput.FAILSAFE = True
     app = QApplication(sys.argv)
+    
+    # Apply dark mode stylesheet
+    app.setStyleSheet("""
+        QWidget {
+            background-color: #2E2E2E;
+            color: #E0E0E0;
+            font-size: 14px;
+        }
+        QLabel {
+            color: #E0E0E0;
+        }
+        QTimeEdit, QSpinBox, QLineEdit {
+            background-color: #3C3C3C;
+            color: #E0E0E0;
+            border: 1px solid #555555;
+            padding: 5px;
+        }
+        QCheckBox {
+            color: #E0E0E0;
+        }
+        QPushButton {
+            background-color: #555555;
+            color: #E0E0E0;
+            border: 1px solid #555555;
+            padding: 5px;
+        }
+        QPushButton:hover {
+            background-color: #666666;
+        }
+        QPushButton:disabled {
+            background-color: #444444;
+            color: #888888;
+        }
+        QTextEdit {
+            background-color: #3C3C3C;
+            color: #E0E0E0;
+            border: 1px solid #555555;
+        }
+    """)
+    
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
