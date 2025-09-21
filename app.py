@@ -4,7 +4,7 @@ from PyQt5.QtCore import QTime, QThread, pyqtSignal
 import pydirectinput
 import time
 from datetime import datetime, timedelta
-import ntplib
+import ntplib  # For NTP clock synchronization (pip install ntplib)
 
 class KeyPressWorker(QThread):
     log_signal = pyqtSignal(str)
@@ -56,8 +56,13 @@ class KeyPressWorker(QThread):
         
         current_time = datetime.now()
         sleep_seconds = (target_time - current_time).total_seconds()
-        if sleep_seconds > 0:
-            time.sleep(sleep_seconds)
+        start_time = time.perf_counter()
+        while sleep_seconds > 0 and not self._stop:
+            # Sleep in short intervals to allow stopping
+            sleep_interval = min(0.1, sleep_seconds)  # Sleep for 100ms or remaining time
+            time.sleep(sleep_interval)
+            current_time = datetime.now()
+            sleep_seconds = (target_time - current_time).total_seconds()
 
         if not self._stop:
             try:
@@ -161,6 +166,8 @@ class MainWindow(QWidget):
         if self.worker:
             self.worker.stop()
             self.log_message("Stopping...")
+            # Ensure UI updates after thread stops
+            self.worker.finished_signal.connect(self.task_finished)
 
     def log_message(self, message):
         self.log_text.append(message)
@@ -168,7 +175,7 @@ class MainWindow(QWidget):
     def task_finished(self):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
-        self.log_message("Task finished.")
+        self.log_message("Task stopped successfully.")
 
 if __name__ == "__main__":
     pydirectinput.FAILSAFE = True
