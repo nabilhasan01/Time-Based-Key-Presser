@@ -58,7 +58,6 @@ class KeyPressWorker(QThread):
         sleep_seconds = (target_time - current_time).total_seconds()
         start_time = time.perf_counter()
         while sleep_seconds > 0 and not self._stop:
-            # Sleep in short intervals to allow stopping
             sleep_interval = min(0.1, sleep_seconds)  # Sleep for 100ms or remaining time
             time.sleep(sleep_interval)
             current_time = datetime.now()
@@ -77,14 +76,14 @@ class KeyPressWorker(QThread):
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Key Press Scheduler")
+        self.setWindowTitle("Time Based Key Clicker")
         self.layout = QVBoxLayout()
 
         # Initial Time
         self.time_label = QLabel("Initial Time (HH:MM:SS):")
         self.time_edit = QTimeEdit()
         self.time_edit.setDisplayFormat("HH:mm:ss")  # Explicitly include seconds
-        current_time = QTime.currentTime()
+        current_time = QTime.currentTime().addSecs(60)  # Set default to current time + 1 minute
         self.time_edit.setTime(QTime(current_time.hour(), current_time.minute(), 0))  # Set seconds to 00
         self.layout.addWidget(self.time_label)
         self.layout.addWidget(self.time_edit)
@@ -150,6 +149,14 @@ class MainWindow(QWidget):
             return
 
         initial_time = self.time_edit.time()
+        now = datetime.now()
+        target_time = now.replace(hour=initial_time.hour(), minute=initial_time.minute(), second=initial_time.second(), microsecond=0)
+
+        # Check if initial time has already passed
+        if target_time <= now:
+            QMessageBox.warning(self, "Error", "The selected initial time has already passed. Please choose a future time.")
+            return
+
         loop_count = self.loop_spin.value()
         is_infinite = self.infinite_check.isChecked()
         delay_seconds = self.delay_spin.value()
@@ -166,7 +173,6 @@ class MainWindow(QWidget):
         if self.worker:
             self.worker.stop()
             self.log_message("Stopping...")
-            # Ensure UI updates after thread stops
             self.worker.finished_signal.connect(self.task_finished)
 
     def log_message(self, message):
