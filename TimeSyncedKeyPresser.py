@@ -4,7 +4,7 @@ from PyQt5.QtCore import QTime, QThread, pyqtSignal
 import pydirectinput
 import time
 from datetime import datetime, timedelta
-import ntplib  # For NTP clock synchronization (pip install ntplib)
+import ntplib
 
 class KeyPressWorker(QThread):
     log_signal = pyqtSignal(str)
@@ -57,7 +57,7 @@ class KeyPressWorker(QThread):
         current_time = datetime.now()
         sleep_seconds = (target_time - current_time).total_seconds()
         while sleep_seconds > 0 and not self._stop:
-            sleep_interval = min(0.1, sleep_seconds)  # Sleep for 100ms or remaining time
+            sleep_interval = min(0.1, sleep_seconds)
             time.sleep(sleep_interval)
             current_time = datetime.now()
             sleep_seconds = (target_time - current_time).total_seconds()
@@ -76,7 +76,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Time Based Key Clicker")
-        self.setFixedSize(300, 550)  # Fixed window size
+        self.setFixedSize(300, 550)
         self.layout = QVBoxLayout()
 
         # Initial Time
